@@ -25,14 +25,14 @@ const controller = require("../controller.js");
 
 /**
  * Constructor - Object oriented approach for handling session for one account
- * @param {SteamUser} client The SteamUser client instance of the calling account
+ * @param {string} proxy The proxy to be used on the calling account
  * @param {string} accountName The account name of the calling account
  * @param {number} loginindex The loginindex of the calling account
  * @param {object} logOnOptions Object containing username, password and optionally steamGuardCode
  */
 class SessionHandler {
-    constructor(client, accountName, loginindex, logOnOptions) {
-        this.client = client;
+    constructor(proxy, accountName, loginindex, logOnOptions) {
+        this.proxy = proxy;
         this.accountName = accountName;
         this.loginindex = loginindex;
         this.logOnOptions = logOnOptions;
@@ -99,7 +99,7 @@ class SessionHandler {
     _attemptCredentialsLogin() {
         // Init new session
         this.session = new SteamSession.LoginSession(SteamSession.EAuthTokenPlatformType.SteamClient, {
-            httpProxy: this.client.proxy,
+            httpProxy: this.proxy,
             machineId: true,
         });
 

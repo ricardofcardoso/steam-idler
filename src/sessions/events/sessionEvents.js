@@ -16,11 +16,26 @@
 
 const sessionHandler = require("../sessionHandler.js");
 
+function decodeJwt(jwt) {
+	let parts = jwt.split('.');
+	if (parts.length != 3) {
+		throw new Error('Invalid JWT');
+	}
+
+	let standardBase64 = parts[1].replace(/-/g, '+')
+		.replace(/_/g, '/');
+
+	return JSON.parse(Buffer.from(standardBase64, 'base64').toString('utf8'));
+}
+
 sessionHandler.prototype._attachEvents = function () {
     this.session.on("authenticated", () => { // Success
         logger.stopReadInput("Login request accepted"); // Should the user have approved this login attempt via the mobile Steam Guard app, stop readInput() from handle2FA
 
         logger("debug", `[${this.accountName}] getRefreshToken(): Login request successful, '${this.session.accountName}' authenticated. Resolving Promise...`);
+
+        let decodedJwt = decodeJwt(this.session.accessToken);
+        logger("debug", `Logged in using IP ${decodedJwt.ip_subject}`);
 
         this._resolvePromise(this.session.refreshToken);
     });

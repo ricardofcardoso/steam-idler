@@ -60,7 +60,7 @@ class Bot {
         }
 
         // Get new session for this account and log in
-        this.session = new SessionHandler(this.client, this.logOnOptions.accountName, this.loginindex, this.logOnOptions);
+        this.session = new SessionHandler(this.proxy, this.logOnOptions.accountName, this.loginindex, this.logOnOptions);
 
         const refreshToken = await this.session.getToken();
         if (!refreshToken) {
@@ -79,15 +79,13 @@ class Bot {
             // If this is a relog then remove this account from the queue and let the next account be able to relog
             if (controller.relogQueue.includes(this.loginindex)) {
                 logger("info", `[${this.logOnOptions.accountName}] Relog successful.`);
-
                 controller.relogQueue.splice(controller.relogQueue.indexOf(this.loginindex), 1); // Remove this loginindex from the queue
             } else {
-                logger("info", `[${this.logOnOptions.accountName}] Logged in! Checking for missing licenses...`);
+                logger("info", `[${this.logOnOptions.accountName}] Logged in through ${this.client.publicIP}! Checking for missing licenses...`);
             }
 
             // Set online status if enabled (https://github.com/DoctorMcKay/node-steam-user/blob/master/enums/EPersonaState.js)
             if (config.onlinestatus) this.client.setPersona(config.onlinestatus);
-
 
             // Check if user provided games specifically for this account
             let configGames = config.playingGames;

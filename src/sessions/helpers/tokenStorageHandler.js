@@ -84,7 +84,7 @@ sessionHandler.prototype._saveTokenToStorage = function (token) {
  * Remove the token of this account from tokens.db. Intended to be called from the steam-user login error event when an invalid token was used so the next login attempt will create a new one.
  */
 sessionHandler.prototype.invalidateTokenInStorage = function () {
-    logger("debug", `[${this.client.logPrefix}] invalidateTokenInStorage(): Removing refreshToken for accountName '${this.logOnOptions.accountName}' from tokens.db...`);
+    logger("debug", `[${this.proxy.logPrefix}] invalidateTokenInStorage(): Removing refreshToken for accountName '${this.logOnOptions.accountName}' from tokens.db...`);
 
     this.tokensdb.removeAsync({ accountName: this.logOnOptions.accountName }, { multi: true });
 };
