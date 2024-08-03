@@ -140,7 +140,7 @@ module.exports.start = async () => {
 
                     // Create new bot object
                     const botfile = require("./bot.js");
-                    const bot = new botfile(e, i, proxies);
+                    const bot = new botfile(e, i);
 
                     bot.login();
 

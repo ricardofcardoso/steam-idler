@@ -33,11 +33,11 @@ const config         = require("../config.json");
  * @param {number} loginindex The loginindex for this account
  * @param proxies
  */
-const Bot = function(logOnOptions, loginindex, proxies) {
+const Bot = function(logOnOptions, loginindex) {
 
     this.logOnOptions = logOnOptions;
     this.loginindex   = loginindex;
-    this.proxy        = proxies[loginindex % proxies.length]; // Spread all accounts equally with a simple modulo calculation
+    this.proxy        = logOnOptions.proxy | null;  // proxy is passed individually to each account on accounts.txt
 
     // Populated by loggedOn event handler, is used by logPlaytime to calculate playtime report for this account
     this.startedPlayingTimestamp = 0;
