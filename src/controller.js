@@ -18,7 +18,7 @@
 const fs = require("fs");
 const logger = require("output-logger");
 
-const config = require("../config.json");
+const Bot = require("./bot.js");
 
 // Export both values to make them accessable from bot.js
 module.exports.nextacc = 0;
@@ -30,7 +30,7 @@ logger.options({
     paramstructure: [logger.Const.TYPE, logger.Const.MESSAGE, "nodate", "remove", logger.Const.ANIMATION],
     outputfile: "./output.txt",
     exitmessage: "Goodbye!",
-    printdebug: false
+    printdebug: true
 });
 
 /**
@@ -47,14 +47,12 @@ function importLogininfo() {
         if (fs.existsSync("./accounts.txt")) {
             let data = fs.readFileSync("./accounts.txt", "utf8").split("\n");
 
-            if (data.length > 0 && data[0].startsWith("//Comment")) data = data.slice(1); // Remove comment from array
-
             if (data != "") {
                 logininfo = {}; // Set empty object
 
                 data.forEach((e) => {
                     if (e.length < 2) return; // If the line is empty ignore it to avoid issues like this: https://github.com/3urobeat/steam-comment-service-bot/issues/80
-                    e = e.split(":");
+                    e = e.split(";");
                     e[e.length - 1] = e[e.length - 1].replace("\r", ""); // Remove Windows next line character from last index (which has to be the end of the line)
 
                     // Format logininfo object and use accountName as key to allow the order to change
@@ -62,7 +60,8 @@ function importLogininfo() {
                         accountName: e[0],
                         password: e[1],
                         sharedSecret: e[2],
-                        steamGuardCode: null
+                        steamGuardCode: null,
+                        proxy: e[3],
                     };
                 });
 
@@ -95,23 +94,19 @@ module.exports.start = async () => {
     // Start creating a bot object for each account
     logger("", "", true);
 
-    Object.values(logininfo).forEach((e, i) => {
+    Object.values(logininfo).forEach((loginInfo, index) => {
         setTimeout(() => {
-
             const readycheckinterval = setInterval(() => {
-                if (this.nextacc == i) { // Check if it is our turn
+                if (this.nextacc == index) { // Check if it is our turn
                     clearInterval(readycheckinterval);
 
                     // Create new bot object
-                    const botfile = require("./bot.js");
-                    const bot = new botfile(e, i);
-
+                    const bot = new Bot(loginInfo, index, loginInfo.proxy);
                     bot.login();
 
                     allBots.push(bot);
                 }
             }, 250);
-
         }, 1000);
     });
 };

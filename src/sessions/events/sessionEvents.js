@@ -20,7 +20,7 @@ sessionHandler.prototype._attachEvents = function () {
     this.session.on("authenticated", () => { // Success
         logger.stopReadInput("Login request accepted"); // Should the user have approved this login attempt via the mobile Steam Guard app, stop readInput() from handle2FA
 
-        logger("debug", `[${this.thisbot}] getRefreshToken(): Login request successful, '${this.session.accountName}' authenticated. Resolving Promise...`);
+        logger("debug", `[${this.accountName}] getRefreshToken(): Login request successful, '${this.session.accountName}' authenticated. Resolving Promise...`);
 
         this._resolvePromise(this.session.refreshToken);
     });
@@ -30,7 +30,7 @@ sessionHandler.prototype._attachEvents = function () {
 
         // TODO: Retry?
 
-        logger("warn", `[${this.thisbot}] Login attempt timed out!`);
+        logger("warn", `[${this.accountName}] Login attempt timed out!`);
 
         this._resolvePromise(null);
     });

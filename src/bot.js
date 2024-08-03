@@ -21,7 +21,7 @@ const SteamTotp = require("steam-totp");
 const SteamUser = require("steam-user");
 const EResult = SteamUser.EResult;
 
-const sessionHandler = require("./sessions/sessionHandler.js");
+const SessionHandler = require("./sessions/sessionHandler.js");
 const controller = require("./controller.js");
 const config = require("../config.json");
 
@@ -32,11 +32,10 @@ const config = require("../config.json");
  * @param proxies
  */
 class Bot {
-    constructor(logOnOptions, loginindex) {
+    constructor(logOnOptions, loginindex, proxy) {
         this.logOnOptions = logOnOptions;
         this.loginindex = loginindex;
-        this.proxy = logOnOptions.proxy | null; // proxy is passed individually to each account on accounts.txt
-
+        this.proxy = proxy; // proxy is passed individually to each account on accounts.txt
 
         // Populated by loggedOn event handler, is used by logPlaytime to calculate playtime report for this account
         this.startedPlayingTimestamp = 0;
@@ -53,9 +52,7 @@ class Bot {
 
     // Handles logging in this account
     async login() {
-        /* ------------ Login ------------ */
-        if (this.proxy) logger("info", `Logging in ${this.logOnOptions.accountName} in ${config.loginDelay / 1000} seconds with proxy '${this.proxy}'...`);
-        else logger("info", `Logging in ${this.logOnOptions.accountName} in ${config.loginDelay / 1000} seconds...`);
+        logger("info", `Logging in ${this.logOnOptions.accountName} in ${config.loginDelay / 1000} seconds${this.proxy ? ` with proxy '${this.proxy}'` : ''}...`);
 
         // Generate steamGuardCode with shared secret if one was provided
         if (this.logOnOptions.sharedSecret) {
@@ -63,10 +60,13 @@ class Bot {
         }
 
         // Get new session for this account and log in
-        this.session = new sessionHandler(this.client, this.logOnOptions.accountName, this.loginindex, this.logOnOptions);
+        this.session = new SessionHandler(this.client, this.logOnOptions.accountName, this.loginindex, this.logOnOptions);
 
         const refreshToken = await this.session.getToken();
-        if (!refreshToken) return; // Stop execution if getToken aborted login attempt
+        if (!refreshToken) {
+            logger("error", `[${this.logOnOptions.accountName}] Failed to get a refreshToken. Login attempt aborted.`);
+            return; // Stop execution if getToken aborted login attempt
+        };
 
         setTimeout(() => this.client.logOn({ "refreshToken": refreshToken }), config.loginDelay); // Log in with logOnOptions
     }
@@ -75,7 +75,6 @@ class Bot {
     attachEventListeners() {
         this.client.on("loggedOn", () => {
             controller.nextacc++; // The next account can start
-
 
             // If this is a relog then remove this account from the queue and let the next account be able to relog
             if (controller.relogQueue.includes(this.loginindex)) {
@@ -226,7 +225,6 @@ class Bot {
     handleRelog() {
         if (controller.relogQueue.includes(this.loginindex)) return; // Don't handle this request if account is already waiting for relog
 
-
         // Call logPlaytime to print session results and reset startedPlayingTimestamp
         this.logPlaytimeToFile();
 
@@ -263,7 +261,6 @@ class Bot {
 
     // Logs playtime to playtime.txt file
     logPlaytimeToFile() {
-
         if (config.logPlaytimeToFile && this.startedPlayingTimestamp != 0) { // If timestamp is 0 then this was already logged
             logger("debug", `Logging playtime for '${this.logOnOptions.accountName}' to playtime.txt...`);
 

@@ -24,7 +24,7 @@ const sessionHandler = require("../sessionHandler.js");
 sessionHandler.prototype._handleCredentialsLoginError = function (err) {
     // Log error message
     logger("", "", true);
-    logger("error", `[${this.thisbot}] Couldn't log in. ${err} (${err.eresult})`, true);
+    logger("error", `[${this.accountName}] Couldn't log in. ${err} (${err.eresult})`, true);
 
     // Add additional messages for specific errors to hopefully help the user diagnose the cause
     if (err.eresult == EResult.InvalidPassword) logger("", `Note: The error "InvalidPassword" (${err.eresult}) can also be caused by a wrong Username or shared_secret!\n      Try leaving the shared_secret field empty and check username & password.`, true);
@@ -38,7 +38,7 @@ sessionHandler.prototype._handleCredentialsLoginError = function (err) {
  * @param {*} err Error thrown by startWithQR()
  */
 sessionHandler.prototype._handleQrCodeLoginError = function (err) {
-    logger("error", `[${this.thisbot}] Failed to start a QR-Code session! Are you having connectivity issues to Steam? ${err}`);
+    logger("error", `[${this.accountName}] Failed to start a QR-Code session! Are you having connectivity issues to Steam? ${err}`);
 
     this._resolvePromise(null); // Skips account
 };

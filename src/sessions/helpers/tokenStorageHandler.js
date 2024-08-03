@@ -54,14 +54,14 @@ sessionHandler.prototype._getTokenFromStorage = function (callback) {
 
             // Compare expire value (unix timestamp in seconds) to current date
             if (jwtObj.exp * 1000 > Date.now()) {
-                logger("info", `[${this.thisbot}] Found valid token until '${validUntilStr}' in tokens.db! Logging in with it to reuse session...`, false, true);
+                logger("info", `[${this.accountName}] Found valid token until '${validUntilStr}' in tokens.db! Logging in with it to reuse session...`, false, true);
                 callback(doc.token);
             } else {
-                logger("info", `[${this.thisbot}] Found invalid token in tokens.db. It was valid till '${validUntilStr}'. Logging in with credentials to get a new session...`, false, true);
+                logger("info", `[${this.accountName}] Found invalid token in tokens.db. It was valid till '${validUntilStr}'. Logging in with credentials to get a new session...`, false, true);
                 callback(null);
             }
         } else {
-            logger("info", `[${this.thisbot}] No token found in tokens.db. Logging in with credentials to get a new session...`, false, true);
+            logger("info", `[${this.accountName}] No token found in tokens.db. Logging in with credentials to get a new session...`, false, true);
             callback(null);
         }
     });
@@ -84,7 +84,7 @@ sessionHandler.prototype._saveTokenToStorage = function (token) {
  * Remove the token of this account from tokens.db. Intended to be called from the steam-user login error event when an invalid token was used so the next login attempt will create a new one.
  */
 sessionHandler.prototype.invalidateTokenInStorage = function () {
-    logger("debug", `[${this.bot.logPrefix}] invalidateTokenInStorage(): Removing refreshToken for accountName '${this.logOnOptions.accountName}' from tokens.db...`);
+    logger("debug", `[${this.client.logPrefix}] invalidateTokenInStorage(): Removing refreshToken for accountName '${this.logOnOptions.accountName}' from tokens.db...`);
 
     this.tokensdb.removeAsync({ accountName: this.logOnOptions.accountName }, { multi: true });
 };

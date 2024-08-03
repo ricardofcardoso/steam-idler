@@ -16,7 +16,6 @@
 
 const SteamSession = require("steam-session"); // Only needed for the enum definitions below
 const qrcode = require("qrcode");
-const { StartSessionResponse } = require("steam-session/dist/interfaces-external.js"); // eslint-disable-line
 
 const sessionHandler = require("../sessionHandler.js");
 
@@ -25,7 +24,7 @@ const sessionHandler = require("../sessionHandler.js");
  * @param {StartSessionResponse} res Response object from startWithCredentials() promise
  */
 sessionHandler.prototype._handle2FA = function (res) {
-    logger("debug", `[${this.thisbot}] getRefreshToken(): Received startWithCredentials() actionRequired response. Type: ${res.validActions[0].type} | Detail: ${res.validActions[0].detail}`);
+    logger("debug", `[${this.accountName}] getRefreshToken(): Received startWithCredentials() actionRequired response. Type: ${res.validActions[0].type} | Detail: ${res.validActions[0].detail}`);
 
     // Get 2FA code/prompt confirmation from user, mentioning the correct source
     switch (res.validActions[0].type) {
@@ -67,7 +66,7 @@ sessionHandler.prototype._get2FAUserInput = function () {
         if (!text || text == "") { // No response or manual skip
             if (text == null) logger("info", "Skipping account because you didn't respond in 1.5 minutes...", true); // No need to check for main acc as timeout is disabled for it
 
-            logger("info", `[${this.thisbot}] steamGuard input empty, skipping account...`, false, true);
+            logger("info", `[${this.accountName}] steamGuard input empty, skipping account...`, false, true);
 
             this._resolvePromise(null);
 
@@ -75,7 +74,7 @@ sessionHandler.prototype._get2FAUserInput = function () {
 
             if (text == "Login request accepted") return; // We must not call submitSteamGuard() when authenticated event calls stopReadInput("Login request accepted")
 
-            logger("info", `[${this.thisbot}] Accepting Steam Guard Code...`, false, true);
+            logger("info", `[${this.accountName}] Accepting Steam Guard Code...`, false, true);
             this._acceptSteamGuardCode(text.toString().trim()); // Pass code to accept function
         }
     });
@@ -85,7 +84,7 @@ sessionHandler.prototype._get2FAUserInput = function () {
 sessionHandler.prototype._acceptSteamGuardCode = function (code) {
     this.session.submitSteamGuardCode(code)
         .then(() => { // Success
-            logger("debug", `[${this.thisbot}] acceptSteamGuardCode(): User supplied correct code, authenticated event should trigger.`);
+            logger("debug", `[${this.accountName}] acceptSteamGuardCode(): User supplied correct code, authenticated event should trigger.`);
         })
         .catch((err) => { // Invalid code, ask again
             logger("warn", `Your code seems to be wrong, please try again or skip this account! ${err}`);
@@ -103,7 +102,7 @@ sessionHandler.prototype._handleQRCode = function (res) {
     // Display QR Code using qrcode library
     qrcode.toString(res.qrChallengeUrl, (err, string) => {
         if (err) {
-            logger("error", `[${this.thisbot}] Failed to display QR Code! Is the URL '${res.qrChallengeUrl}' invalid? ${err}`);
+            logger("error", `[${this.accountName}] Failed to display QR Code! Is the URL '${res.qrChallengeUrl}' invalid? ${err}`);
             return this._resolvePromise(null);
         }
 

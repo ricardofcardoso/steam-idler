@@ -25,20 +25,18 @@ const controller = require("../controller.js");
 
 /**
  * Constructor - Object oriented approach for handling session for one account
- * @param {SteamUser} bot The bot instance of the calling account
- * @param {string} thisbot The thisbot string of the calling account
+ * @param {SteamUser} client The SteamUser client instance of the calling account
+ * @param {string} accountName The account name of the calling account
  * @param {number} loginindex The loginindex of the calling account
  * @param {object} logOnOptions Object containing username, password and optionally steamGuardCode
  */
-class sessionHandler {
-    constructor(bot, thisbot, loginindex, logOnOptions) {
-        // Make parameters given to the constructor available
-        this.bot = bot;
-        this.thisbot = thisbot;
+class SessionHandler {
+    constructor(client, accountName, loginindex, logOnOptions) {
+        this.client = client;
+        this.accountName = accountName;
         this.loginindex = loginindex;
         this.logOnOptions = logOnOptions;
 
-        // Define vars that will be populated
         this.getTokenPromise = null; // Can be called from a helper later on
         this.session = null;
 
@@ -58,7 +56,7 @@ class sessionHandler {
      */
     getToken() {
         return new Promise((resolve) => {
-            logger("debug", `[${this.thisbot}] getToken(): Created new object for token request`);
+            logger("debug", `[${this.accountName}] getToken(): Created new object for token request`);
 
             // Save promise resolve function so any other function of this object can resolve the promise itself
             this.getTokenPromise = resolve;
@@ -80,10 +78,9 @@ class sessionHandler {
      * @param {string} token The token to resolve with or null when account should be skipped
      */
     _resolvePromise(token) {
-
         // Skip this account if token is null or stop bot if this is the main account
         if (!token) {
-            logger("error", `[${this.thisbot}] Couldn't log in! Continuing with next account...`);
+            logger("error", `[${this.accountName}] Couldn't log in! Continuing with next account...`);
             controller.nextacc++; // The next account can start
 
             this.session.cancelLoginAttempt(); // Cancel this login attempt just to be sure
@@ -100,12 +97,16 @@ class sessionHandler {
      * Internal - Attempts to log into account with credentials
      */
     _attemptCredentialsLogin() {
-
         // Init new session
-        this.session = new SteamSession.LoginSession(SteamSession.EAuthTokenPlatformType.SteamClient, { httpProxy: this.bot.proxy });
+        this.session = new SteamSession.LoginSession(SteamSession.EAuthTokenPlatformType.SteamClient, {
+            httpProxy: this.client.proxy,
+            machineId: true,
+        });
 
         // Attach event listeners
         this._attachEvents();
+
+        logger("debug", this.logOnOptions);
 
         // Login with QR Code if password is "qrcode", otherwise with normal credentials
         if (this.logOnOptions.password == "qrcode") {
@@ -188,4 +189,4 @@ class sessionHandler {
 }
 
 // Make object accessible from outside
-module.exports = sessionHandler;
+module.exports = SessionHandler;
