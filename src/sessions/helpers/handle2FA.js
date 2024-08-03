@@ -14,20 +14,17 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 const SteamSession = require("steam-session"); // Only needed for the enum definitions below
-const qrcode       = require("qrcode");
+const qrcode = require("qrcode");
 const { StartSessionResponse } = require("steam-session/dist/interfaces-external.js"); // eslint-disable-line
 
 const sessionHandler = require("../sessionHandler.js");
-
 
 /**
  * Internal - Handles submitting 2FA code
  * @param {StartSessionResponse} res Response object from startWithCredentials() promise
  */
-sessionHandler.prototype._handle2FA = function(res) {
-
+sessionHandler.prototype._handle2FA = function (res) {
     logger("debug", `[${this.thisbot}] getRefreshToken(): Received startWithCredentials() actionRequired response. Type: ${res.validActions[0].type} | Detail: ${res.validActions[0].detail}`);
 
     // Get 2FA code/prompt confirmation from user, mentioning the correct source
@@ -60,10 +57,8 @@ sessionHandler.prototype._handle2FA = function(res) {
     }
 };
 
-
 // Helper function to get 2FA code from user and passing it to accept function or skipping account if desired
-sessionHandler.prototype._get2FAUserInput = function() {
-
+sessionHandler.prototype._get2FAUserInput = function () {
     const question = `[${this.logOnOptions.accountName}] Steam Guard Code (leave empty and press ENTER to skip account): `;
     const timeout = 90000;
 
@@ -86,10 +81,8 @@ sessionHandler.prototype._get2FAUserInput = function() {
     });
 };
 
-
 // Helper function to make accepting and re-requesting invalid steam guard codes easier
-sessionHandler.prototype._acceptSteamGuardCode = function(code) {
-
+sessionHandler.prototype._acceptSteamGuardCode = function (code) {
     this.session.submitSteamGuardCode(code)
         .then(() => { // Success
             logger("debug", `[${this.thisbot}] acceptSteamGuardCode(): User supplied correct code, authenticated event should trigger.`);
@@ -100,16 +93,13 @@ sessionHandler.prototype._acceptSteamGuardCode = function(code) {
             // Ask user again
             this._get2FAUserInput();
         });
-
 };
-
 
 /**
  * Handles displaying a QR Code to login using the Steam Mobile App
  * @param {StartSessionResponse} res Response object from startWithQR() promise
  */
-sessionHandler.prototype._handleQRCode = function(res) {
-
+sessionHandler.prototype._handleQRCode = function (res) {
     // Display QR Code using qrcode library
     qrcode.toString(res.qrChallengeUrl, (err, string) => {
         if (err) {
@@ -119,5 +109,4 @@ sessionHandler.prototype._handleQRCode = function(res) {
 
         logger("info", `[${this.logOnOptions.accountName}] Scan the following QR Code using your Steam Mobile App to start a new session:\n${string}`);
     });
-
 };

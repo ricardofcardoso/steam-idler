@@ -14,12 +14,10 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 const sessionHandler = require("../sessionHandler.js");
 
-
 // Helper function which decodes a JsonWebToken - https://stackoverflow.com/a/38552302
-sessionHandler.prototype._decodeJWT = function(token) {
+sessionHandler.prototype._decodeJWT = function (token) {
     const payload = token.split(".")[1];           // Remove header and signature as we only care about the payload
     const decoded = Buffer.from(payload, "base64"); // Decode
 
@@ -33,13 +31,11 @@ sessionHandler.prototype._decodeJWT = function(token) {
     } // No need to invalidate token here as the new session will get a new token and overwrite the existing one anyway
 };
 
-
 /**
  * Internal - Attempts to get a token for this account from tokens.db and checks if it's valid
  * @param {Function} [callback] Called with `refreshToken` (String) on success or `null` on failure
  */
-sessionHandler.prototype._getTokenFromStorage = function(callback) {
-
+sessionHandler.prototype._getTokenFromStorage = function (callback) {
     // Search tokens database with accountName for a valid token so we can skip creating a new session
     this.tokensdb.findOne({ accountName: this.logOnOptions.accountName }, (err, doc) => {
         if (err) {
@@ -76,7 +72,7 @@ sessionHandler.prototype._getTokenFromStorage = function(callback) {
  * Internal - Saves a new token for this account to tokens.db
  * @param {string} token The refreshToken to store
  */
-sessionHandler.prototype._saveTokenToStorage = function(token) {
+sessionHandler.prototype._saveTokenToStorage = function (token) {
     logger("debug", `_saveTokenToStorage(): Updating tokens.db entry for accountName '${this.logOnOptions.accountName}'...`);
 
     // Update db entry for this account. Upsert is enabled so a new doc will be inserted if none exists yet
@@ -87,7 +83,7 @@ sessionHandler.prototype._saveTokenToStorage = function(token) {
 /**
  * Remove the token of this account from tokens.db. Intended to be called from the steam-user login error event when an invalid token was used so the next login attempt will create a new one.
  */
-sessionHandler.prototype.invalidateTokenInStorage = function() {
+sessionHandler.prototype.invalidateTokenInStorage = function () {
     logger("debug", `[${this.bot.logPrefix}] invalidateTokenInStorage(): Removing refreshToken for accountName '${this.logOnOptions.accountName}' from tokens.db...`);
 
     this.tokensdb.removeAsync({ accountName: this.logOnOptions.accountName }, { multi: true });

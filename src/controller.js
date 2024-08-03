@@ -14,15 +14,14 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 // Handles creating bot objects, providing them with data and relogging
-const fs     = require("fs");
+const fs = require("fs");
 const logger = require("output-logger");
 
 const config = require("../config.json");
 
 // Export both values to make them accessable from bot.js
-module.exports.nextacc    = 0;
+module.exports.nextacc = 0;
 module.exports.relogQueue = []; // Queue tracking disconnected accounts to relog them after eachother with a delay
 
 // Configure my logging lib
@@ -33,7 +32,6 @@ logger.options({
     exitmessage: "Goodbye!",
     printdebug: false
 });
-
 
 /**
  * Helper function to import login information from accounts.txt
@@ -91,7 +89,7 @@ function importProxies() {
         let proxies = []; // When the file is just created there can't be proxies in it (this bot doesn't support magic)
 
         if (!fs.existsSync("./proxies.txt")) {
-            resolve([ null ]);
+            resolve([null]);
         } else { // File does seem to exist so now we can try and read it
             proxies = fs.readFileSync("./proxies.txt", "utf8").split("\n");
             proxies = proxies.filter(str => str != ""); // Remove empty lines

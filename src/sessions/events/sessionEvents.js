@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 const sessionHandler = require("../sessionHandler.js");
 
-
-sessionHandler.prototype._attachEvents = function() {
-
+sessionHandler.prototype._attachEvents = function () {
     this.session.on("authenticated", () => { // Success
         logger.stopReadInput("Login request accepted"); // Should the user have approved this login attempt via the mobile Steam Guard app, stop readInput() from handle2FA
 
@@ -47,5 +44,4 @@ sessionHandler.prototype._attachEvents = function() {
 
         this._resolvePromise(null);
     });
-
 };
