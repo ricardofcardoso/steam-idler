@@ -35,7 +35,7 @@ sessionHandler.prototype._attachEvents = function () {
         logger("debug", `[${this.accountName}] getRefreshToken(): Login request successful, '${this.session.accountName}' authenticated. Resolving Promise...`);
 
         let decodedJwt = decodeJwt(this.session.accessToken);
-        logger("debug", `Logged in using IP ${decodedJwt.ip_subject}`);
+        logger("debug", `[${this.accountName}] Access token IP subject ${decodedJwt.ip_subject}`);
 
         this._resolvePromise(this.session.refreshToken);
     });
