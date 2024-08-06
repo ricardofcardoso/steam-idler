@@ -17,8 +17,8 @@
 // Handles creating bot objects, providing them with data and relogging
 const fs = require("fs");
 const logger = require("output-logger");
-
 const Bot = require("./bot.js");
+const allBots = [];
 
 // Export both values to make them accessable from bot.js
 module.exports.nextacc = 0;
@@ -35,83 +35,102 @@ logger.options({
 
 /**
  * Helper function to import login information from accounts.txt
- * @returns {Promise} logininfo object on success, bot is stopped on failure
+ * @returns {Promise} data array on success, Promise rejected in case of failure
  */
-function importLogininfo() {
-    return new Promise((resolve) => {
-        logger("info", "Loading logininfo from accounts.txt...");
-
-        let logininfo = {};
-
-        // Import data from accounts.txt
-        if (fs.existsSync("./accounts.txt")) {
-            let data = fs.readFileSync("./accounts.txt", "utf8").split("\n");
-
-            if (data != "") {
-                logininfo = {}; // Set empty object
-
-                data.forEach((e) => {
-                    if (e.length < 2) return; // If the line is empty ignore it to avoid issues like this: https://github.com/3urobeat/steam-comment-service-bot/issues/80
-                    e = e.split(";");
-                    e[e.length - 1] = e[e.length - 1].replace("\r", ""); // Remove Windows next line character from last index (which has to be the end of the line)
-
-                    // Format logininfo object and use accountName as key to allow the order to change
-                    logininfo[e[0]] = {
-                        accountName: e[0],
-                        password: e[1],
-                        sharedSecret: e[2],
-                        steamGuardCode: null,
-                        proxy: e[3],
-                    };
-                });
-
-                logger("info", `Found ${Object.keys(logininfo).length} accounts in accounts.txt, not checking for logininfo.json...`, false, true, logger.animation("loading"));
-
-                return resolve(logininfo);
-            } else {
-                logger("error", "No accounts found in accounts.txt! Aborting...");
-                process.exit(1);
-            }
+function readFileAsync(filename) {
+    logger("info", "Loading logininfo from accounts.txt...");
+    return new Promise((resolve, reject) => {
+        if (fs.existsSync(filename)) {
+            const data = fs.readFileSync(filename, "utf8").split("\n");
+            resolve(data);
         } else {
             logger("error", "No accounts found in accounts.txt! Aborting...");
-            process.exit(1);
+            reject(new Error("No accounts found in accounts.txt"));
+        }
+    });
+}
+
+/**
+ * Helper function to process data from readFileAscyn
+ * @param {string[]} data - Array of lines from the file
+ * @returns {Promise} loginInfo object on success, Promise rejected in case of failure
+ */
+function processFileData(data) {
+    return new Promise((resolve, reject) => {
+        try {
+            let loginInfo = {};
+
+            data.forEach((line, index) => {
+                if (line.length < 2) return;    // Ignore empty or near-empty lines
+
+                const parts = line.split(";");
+                if (parts.length < 2) {
+                    logger("warn", `Line ${index + 1} is malformed: "${line}"`);
+                    return; // Skip malformed lines
+                }
+
+                const [accountName, password, sharedSecret = null, proxy = null] = parts;
+                loginInfo[accountName] = {
+                    accountName: accountName,
+                    password: password,
+                    sharedSecret: sharedSecret,
+                    steamGuardCode: null,
+                    proxy: proxy ? proxy.replace("\r", "") : null
+                };
+            });
+
+            logger("info", `Found ${Object.keys(loginInfo).length} accounts in accounts.txt.`, false, true, logger.animation("loading"));
+            resolve(loginInfo);
+        } catch (error) {
+            logger("error", `Failed to process file data: ${error.message}`);
+            reject(error);
         }
     });
 }
 
 /* ------------ Login all accounts ------------ */
-const allBots = [];
-
 module.exports.start = async () => {
     global.logger = logger; // Make logger accessible from everywhere in this project
 
     logger("", "", true, true);
     logger("info", "steam-idler by 3urobeat v1.9\n");
 
-    // Call helper function to import logininfo
-    const logininfo = await importLogininfo();
+    try {
+        const data = await readFileAsync('accounts.txt');
+        const info = await processFileData(data);
 
-    // Start creating a bot object for each account
-    logger("", "", true);
+        logger("", "", true);
 
-    Object.values(logininfo).forEach((loginInfo, index) => {
-        setTimeout(() => {
-            const readycheckinterval = setInterval(() => {
-                if (this.nextacc == index) { // Check if it is our turn
-                    clearInterval(readycheckinterval);
+        Object.values(info).forEach((loginInfo, index) => {
+            setTimeout(() => {
+                const readycheckinterval = setInterval(() => {
+                    if (this.nextacc === index) { // Check if it is our turn
+                        clearInterval(readycheckinterval);
 
-                    // Create new bot object
-                    const bot = new Bot(loginInfo, index, loginInfo.proxy);
-                    bot.login();
-
-                    allBots.push(bot);
-                }
-            }, 250);
-        }, 1000);
-    });
+                        try {
+                            // Create new bot object
+                            const bot = new Bot(loginInfo, index, loginInfo.proxy);
+                            bot.login();
+                            allBots.push(bot);
+                        } catch (error) {
+                            console.error(`Failed to initialize bot for account at index ${index}:`, error);
+                        }
+                    }
+                }, 250);
+            }, index * 1000);
+        });
+    } catch (error) {
+        logger("error", `Error starting bots: ${error.message}`);
+    }
 };
 
 // Log playtime for all accounts on exit
 process.on("exit", () => {
-    allBots.forEach((e) => e.logPlaytimeToFile());
+    allBots.forEach((bot) => {
+        try {
+            bot.logPlaytimeToFile();
+        } catch (error) {
+            console.error("Error logging playtime for a bot:", error);
+        }
+    });
 });
